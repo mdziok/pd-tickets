@@ -46,8 +46,6 @@ Frontend: http://localhost:8081
 ```json
 {
   "message": "Przykładowa treść wiadomości",
-  "user": "user",
-  "send_time": "2026-10-20T07:00:00+00:00"
 }
 ```
 
@@ -67,10 +65,10 @@ INSERT INTO tickets
 VALUES (?, ?, ?, ?, ?);
 ```
 
-Przy zamknięciu kontenera usuwany jest schemat bazy danych: `spring.jpa.hibernate.ddl-auto=create-drop` 
+W środowisku lokalnym ustaiono `spring.jpa.hibernate.ddl-auto=update`, aby tabele bazy danych nie były automatycznie usuwane podczas zamyykania aplikacji. 
 
 
-TODO: dodać integrację z Keycloak i Redis.
+TODO: dodać integrację z Redis.
 
 Usunięcie kontenerów:
 ```bash
@@ -81,3 +79,23 @@ Usunięcie kontenerów z danymi kolejek:
 ```bash
 docker compose down -v
 ```
+
+## Keycloak
+
+Keycloak odpowiada za logowanie użytkowników do aplikacji.
+
+1. Uruchom projekt poleceniem `docker compose up -d --build`.
+2. Otwórz panel administracyjny: http://localhost:8082 (lokalnie: `admin / admin`).
+3. Utwórz **realm** o nazwie `pd-tickets`.
+4. W **Clients → Create client** skonfiguruj klienta:
+    - **Client type:** OpenID Connect
+    - **Client ID:** `pd-tickets-ui`
+    - **Client authentication:** Off
+    - **Standard flow:** On
+    - **Valid redirect URIs:** `http://localhost:8081/*`
+    - **Web origins:** `http://localhost:8081`
+    - **PKCE:** S256
+5. W **Users → Add user** utwórz użytkownika i ustaw hasło w **Credentials**.
+6. Otwórz http://localhost:8081 i zaloguj się.
+
+Konfiguracja Keycloak jest przechowywana w wolumenie Dockera. Usunięcie wolumenów może wymagać ponownej konfiguracji.
