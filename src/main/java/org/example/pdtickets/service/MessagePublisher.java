@@ -1,6 +1,6 @@
 package org.example.pdtickets.service;
 
-import org.example.pdtickets.api.MessageRequest;
+import org.example.pdtickets.api.TicketMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class MessagePublisher {
         this.incomingQueue = incomingQueue;
     }
 
-    public void publish(MessageRequest request) {
+    public void publish(TicketMessage request) {
         rabbitTemplate.convertAndSend(incomingQueue, request);
     }
 }
