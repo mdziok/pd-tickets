@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.Map;
-import org.springframework.web.bind.annotation.*;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -24,8 +26,18 @@ public class MessageController {
 
     @PostMapping
     public ResponseEntity<Map<String, String>> postMessage(
-            @Valid @RequestBody MessageRequest request) {
-        publisher.publish(request);
+            @Valid @RequestBody MessageRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        String username = jwt.getClaimAsString("preferred_username");
+
+        TicketMessage requestWithUser = new TicketMessage(
+                request.message(),
+                username,
+                Instant.now()
+        );
+        
+        publisher.publish(requestWithUser);
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(Map.of(
                         "status", "accepted",
