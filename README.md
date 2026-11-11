@@ -2,7 +2,7 @@
 
 ## Opis projektu
 
-System umożliwia użytkownikowi tworzenie i przeglądanie zgłoszeń. Użytkownik loguje się do systemu przy użyciu Keycloak. Zgłoszenie trafia poprzez serwer kolejek do backendu pomocniczego, gdzie na podstawie słów kluczowych jest mu przydzielana kategoria. Nadana kategoria jest przesłana z serwera pomocniczego do serwer głównego. Sewer główny zapisuje zgłoszenie w docelowym repozytorium (PostgreSQL).
+System umożliwia użytkownikowi tworzenie i przeglądanie zgłoszeń. Użytkownik loguje się do systemu przy użyciu Keycloak. Zgłoszenie trafia poprzez RabbitMQ do backendu pomocniczego napisanego w Pythonie, gdzie lokalny model AI uruchamiany przez Ollama analizuje jego treść, automatycznie przypisuje kategorię. Nadana kategoria jest przesłana z serwera pomocniczego do serwer głównego. Sewer główny zapisuje zgłoszenie w docelowym repozytorium (PostgreSQL).
 
 ## Skład zespołu
 * Mikołaj Bucki
@@ -119,3 +119,11 @@ Keycloak odpowiada za logowanie użytkowników do aplikacji.
 6. Otwórz http://localhost:8081 i zaloguj się.
 
 Konfiguracja Keycloak jest przechowywana w wolumenie Dockera. Usunięcie wolumenów może wymagać ponownej konfiguracji.
+
+## Uruchomienie modelu AI
+
+Po uruchomieniu kontenerów należy pobrać model:
+
+```bash
+docker compose exec ollama ollama pull qwen3:1.7b
+```
