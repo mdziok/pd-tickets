@@ -87,7 +87,8 @@ Keycloak odpowiada za logowanie użytkowników do aplikacji.
 1. Uruchom projekt poleceniem `docker compose up -d --build`.
 2. Otwórz panel administracyjny: http://localhost:8082 (lokalnie: `admin / admin`).
 3. Utwórz **realm** o nazwie `pd-tickets`.
-4. W **Clients → Create client** skonfiguruj klienta:
+4. Konfiguracja klienta frontendu:
+    W **Clients → Create client** skonfiguruj klienta:
     - **Client type:** OpenID Connect
     - **Client ID:** `pd-tickets-ui`
     - **Client authentication:** Off
@@ -95,6 +96,25 @@ Keycloak odpowiada za logowanie użytkowników do aplikacji.
     - **Valid redirect URIs:** `http://localhost:8081/*`
     - **Web origins:** `http://localhost:8081`
     - **PKCE:** S256
+    
+    Konfiguracja klienta backendu:
+    W **Clients → Create client** skonfiguruj klienta:
+    - **Client type:** OpenID Connect
+    - **Client ID:** `pd-tickets-api`
+    - **Client authentication:** Off
+    - **Standard flow:** On
+    - **Standard flow:** Off
+
+    Konfiguracja Audience Mapper:
+    1. Przejdź do **Clients → pd-tickets-ui → Client scopes → pd-tickets-ui-dedicated → Mappers**.
+    2. Wybierz **Configure a new mapper → Audience**.
+    3. Ustaw:
+    - **Name:** `pd-tickets-api-audience`
+    - **Included Client Audience:** `pd-tickets-api`
+    - **Add to access token:** On
+    - **Add to ID token:** Off
+    4. Zapisz zmiany.
+    
 5. W **Users → Add user** utwórz użytkownika i ustaw hasło w **Credentials**.
 6. Otwórz http://localhost:8081 i zaloguj się.
 
