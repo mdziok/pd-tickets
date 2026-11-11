@@ -29,6 +29,14 @@ public class Ticket {
     @Column(name = "category", length = 100)
     private String category;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private TicketStatus status = TicketStatus.NEW;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false)
+    private TicketPriority priority = TicketPriority.MEDIUM;
+
     protected Ticket() {
     }
 
@@ -40,6 +48,14 @@ public class Ticket {
         this.username = user;
         this.category = category;
         this.processedAt = processedAt;
+    }
+
+    public void changeStatus(TicketStatus status) {
+        this.status = status;
+    }
+
+    public void changePriority(TicketPriority priority) {
+        this.priority = priority;
     }
 
 }

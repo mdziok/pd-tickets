@@ -24,6 +24,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/status")
+                                .hasAnyRole("TECHNICIAN", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/priority")
+                                .hasAnyRole("TECHNICIAN", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/tickets/all")
                                 .hasAnyRole("TECHNICIAN", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/tickets")
