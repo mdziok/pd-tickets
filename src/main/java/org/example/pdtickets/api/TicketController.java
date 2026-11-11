@@ -25,4 +25,9 @@ public class TicketController {
         String username = jwt.getClaimAsString("preferred_username");
         return ticketRepository.findByUsername(username);
     }
+
+    @GetMapping("/all")
+    public List<Ticket> getAllTickets() {
+        return ticketRepository.findAll();
+    }
 }
