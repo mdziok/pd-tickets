@@ -4,6 +4,7 @@
 
 System umożliwia użytkownikowi tworzenie i przeglądanie zgłoszeń. Użytkownik loguje się do systemu przy użyciu Keycloak. Zgłoszenie trafia poprzez RabbitMQ do backendu pomocniczego napisanego w Pythonie, gdzie lokalny model AI uruchamiany przez Ollama analizuje jego treść, automatycznie przypisuje kategorię. Nadana kategoria jest przesłana z serwera pomocniczego do serwer głównego. Sewer główny zapisuje zgłoszenie w docelowym repozytorium (PostgreSQL).
 
+
 ## Skład zespołu
 * Mikołaj Bucki
 * Kamil Dąbrowski
@@ -39,7 +40,7 @@ W katalogu głównego backendu:
 ```bash
 docker compose up --build -d
 ```
-Polecenie uruchamia frontend i oba backendy, bazę PostgreSQL oraz RabbitMQ.
+Polecenie uruchamia frontend i oba backendy, bazę PostgreSQL, RabbitMQ oraz Redis.
 
 Frontend: http://localhost:8081 
 
@@ -68,7 +69,32 @@ VALUES (?, ?, ?, ?, ?);
 W środowisku lokalnym ustaiono `spring.jpa.hibernate.ddl-auto=update`, aby tabele bazy danych nie były automatycznie usuwane podczas zamyykania aplikacji. 
 
 
-TODO: dodać integrację z Redis.
+## Redis (cache listy zgłoszeń)
+
+Redis przyspiesza `GET /api/tickets`: lista zgłoszeń użytkownika jest odczytywana z PostgreSQL tylko raz, potem serwowana z cache.
+
+```text
+GET /api/tickets ──> TicketService.getTickets(@Cacheable) ──HIT──> Redis
+                                   └──MISS──> PostgreSQL ──> zapis w Redis (TTL 5 min)
+kolejka "processed" ──> TargetListener: zapis do PostgreSQL ──> usunięcie wpisu użytkownika z Redis
+```
+
+* klucz: `pd-tickets::tickets::<username>`, TTL: `spring.cache.redis.time-to-live` (domyślnie 5 min),
+* nowe zgłoszenie unieważnia cache tego użytkownika (po commicie do bazy),
+* gdy Redis jest niedostępny, po timeoucie 500 ms aplikacja loguje ostrzeżenie i czyta z bazy (brak błędu 500; każde żądanie jest wtedy wolniejsze o ok. 1 s),
+* wartości w Redisie są serializowane serializacją Javy (binarnie), dlatego w `redis-cli` widać je jako bajty.
+
+Jak sprawdzić:
+```bash
+docker compose up --build -d
+docker compose exec redis redis-cli ping                       # PONG
+# 1. zaloguj się w UI (http://localhost:8081) i odśwież listę zgłoszeń kilka razy
+docker compose logs app | grep CACHE                            # MISS tylko za pierwszym razem
+docker compose exec redis redis-cli KEYS 'pd-tickets::*'        # klucz użytkownika
+docker compose exec redis redis-cli TTL 'pd-tickets::tickets::<username>'
+# 2. wyślij nowe zgłoszenie, po chwili w logach: CACHE EVICT, a kolejny odczyt to znów CACHE MISS
+# 3. test awarii: docker compose stop redis -> lista nadal działa (z bazy), w logach WARN
+```
 
 Usunięcie kontenerów:
 ```bash
@@ -127,3 +153,4 @@ Po uruchomieniu kontenerów należy pobrać model:
 ```bash
 docker compose exec ollama ollama pull qwen3:1.7b
 ```
+
