@@ -16,6 +16,7 @@ public class SecurityConfig {
                 this.keycloakJwtConverter = keycloakJwtConverter;
         }
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -37,6 +38,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtConverter)))
+
                 .build();
     }
 }

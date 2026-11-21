@@ -1,5 +1,6 @@
 package org.example.pdtickets.service;
 
+
 import org.example.pdtickets.persistence.Ticket;
 import org.example.pdtickets.persistence.TicketRepository;
 import org.example.pdtickets.persistence.TicketStatus;
@@ -9,6 +10,15 @@ import org.springframework.web.server.ResponseStatusException;
 import org.example.pdtickets.persistence.TicketPriority;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.example.pdtickets.api.TicketDto;
+import org.example.pdtickets.cache.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Service
 public class TicketService {
@@ -41,5 +51,18 @@ public class TicketService {
         ticket.changePriority(priority);
 
         return ticket;
+    }
+
+    /**
+     * Lista zgłoszeń użytkownika. Wynik ląduje w Redisie pod kluczem
+     * "pd-tickets::tickets::{username}". Ciało metody wykonuje się tylko przy
+     * CACHE MISS - przy HIT Spring zwraca wartość z Redisa bez dotykania bazy.
+     */
+    @Cacheable(cacheNames = CacheConfig.TICKETS_CACHE, key = "#username")
+    public List<TicketDto> getTickets(String username) {
+        log.info("CACHE MISS tickets[" + username + "] -> odczyt z PostgreSQL");
+        return new ArrayList<>(ticketRepository.findByUsername(username).stream()
+                .map(TicketDto::from)
+                .toList());
     }
 }

@@ -7,6 +7,13 @@ import org.example.pdtickets.persistence.TicketRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.example.pdtickets.cache.CacheConfig;
+import org.example.pdtickets.persistence.Ticket;
+import org.example.pdtickets.persistence.TicketRepository;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.stereotype.Component;
 
 @Component
 public class TargetListener {
@@ -20,6 +27,17 @@ public class TargetListener {
 
     @RabbitListener(queues = "${app.rabbitmq.target-queue}")
     @Transactional
+    private final CacheManager cacheManager;
+
+    public TargetListener(TicketRepository repository, CacheManager cacheManager) {
+        this.repository = repository;
+        this.cacheManager = cacheManager;
+    }
+
+    // Bez @Transactional na metodzie: repository.save() commituje własną transakcję
+    // i dopiero PO niej unieważniamy cache. Dzięki temu równoległy odczyt nie zdąży
+    // zapisać w Redisie starej listy (sprzed commita).
+    @RabbitListener(queues = "${app.rabbitmq.target-queue}")
     public void receive(TargetMessage message) {
         if (message.message() == null || message.message().isBlank()) {
             throw new IllegalArgumentException("Pole message nie może być puste");
@@ -39,5 +57,20 @@ public class TargetListener {
                 message.category()
         );
         repository.save(entity);
+
+        evictUserTickets(message.user());
+    }
+
+    private void evictUserTickets(String user) {
+        try {
+            Cache cache = cacheManager.getCache(CacheConfig.TICKETS_CACHE);
+            if (cache != null) {
+                cache.evict(user);
+                log.info("CACHE EVICT tickets[" + user + "] po zapisaniu nowego zgłoszenia");
+            }
+        } catch (RuntimeException e) {
+            // zgłoszenie jest już w bazie; nie cofamy go przez awarię Redisa (cache wygaśnie po TTL)
+            log.warn("Nie udało się unieważnić cache dla " + user + " (wygaśnie po TTL)", e);
+        }
     }
 }
