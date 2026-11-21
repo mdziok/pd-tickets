@@ -25,6 +25,8 @@ services:
       - "15672:15672"
     volumes:
       - source_data:/var/lib/rabbitmq
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
       interval: 10s
@@ -89,8 +91,20 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pd-tickets-ollama
+    environment:
+      OLLAMA_URL: http://ollama:11434/api/generate
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
 volumes:
   source_data:
   target_data:
   postgres_data:
   keycloak_data:
+  ollama_data:

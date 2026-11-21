@@ -1,0 +1,15 @@
+{
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "incoming-dlx",
+      "pattern": "^incoming$",
+      "apply-to": "queues",
+      "definition": {
+        "dead-letter-exchange": "",
+        "dead-letter-routing-key": "incoming.dlq"
+      },
+      "priority": 0
+    }
+  ]
+}
