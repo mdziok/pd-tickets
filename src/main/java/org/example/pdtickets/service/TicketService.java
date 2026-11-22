@@ -10,8 +10,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.example.pdtickets.persistence.TicketPriority;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.example.pdtickets.api.TicketDto;
 import org.example.pdtickets.cache.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
@@ -60,7 +58,6 @@ public class TicketService {
      */
     @Cacheable(cacheNames = CacheConfig.TICKETS_CACHE, key = "#username")
     public List<TicketDto> getTickets(String username) {
-        log.info("CACHE MISS tickets[" + username + "] -> odczyt z PostgreSQL");
         return new ArrayList<>(ticketRepository.findByUsername(username).stream()
                 .map(TicketDto::from)
                 .toList());

@@ -6,14 +6,9 @@ import org.example.pdtickets.persistence.Ticket;
 import org.example.pdtickets.persistence.TicketRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.example.pdtickets.cache.CacheConfig;
-import org.example.pdtickets.persistence.Ticket;
-import org.example.pdtickets.persistence.TicketRepository;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.stereotype.Component;
 
 @Component
 public class TargetListener {
@@ -21,12 +16,7 @@ public class TargetListener {
     private static final Log log = LogFactory.getLog(TargetListener.class);
     private final TicketRepository repository;
 
-    public TargetListener(TicketRepository repository) {
-        this.repository = repository;
-    }
 
-    @RabbitListener(queues = "${app.rabbitmq.target-queue}")
-    @Transactional
     private final CacheManager cacheManager;
 
     public TargetListener(TicketRepository repository, CacheManager cacheManager) {
@@ -37,6 +27,7 @@ public class TargetListener {
     // Bez @Transactional na metodzie: repository.save() commituje własną transakcję
     // i dopiero PO niej unieważniamy cache. Dzięki temu równoległy odczyt nie zdąży
     // zapisać w Redisie starej listy (sprzed commita).
+//    @Transactional
     @RabbitListener(queues = "${app.rabbitmq.target-queue}")
     public void receive(TargetMessage message) {
         if (message.message() == null || message.message().isBlank()) {

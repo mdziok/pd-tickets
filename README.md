@@ -122,26 +122,51 @@ Keycloak odpowiada za logowanie użytkowników do aplikacji.
     - **Valid redirect URIs:** `http://localhost:8081/*`
     - **Web origins:** `http://localhost:8081`
     - **PKCE:** S256
-    
-    Konfiguracja klienta backendu:
-    W **Clients → Create client** skonfiguruj klienta:
-    - **Client type:** OpenID Connect
-    - **Client ID:** `pd-tickets-api`
-    - **Client authentication:** Off
-    - **Standard flow:** On
-    - **Standard flow:** Off
 
-    Konfiguracja Audience Mapper:
-    1. Przejdź do **Clients → pd-tickets-ui → Client scopes → pd-tickets-ui-dedicated → Mappers**.
-    2. Wybierz **Configure a new mapper → Audience**.
-    3. Ustaw:
-    - **Name:** `pd-tickets-api-audience`
-    - **Included Client Audience:** `pd-tickets-api`
-    - **Add to access token:** On
-    - **Add to ID token:** Off
-    4. Zapisz zmiany.
+   Role:
+   - Client → Roles → Create role:
+     - admin
+     - technician
+     - user
     
-5. W **Users → Add user** utwórz użytkownika i ustaw hasło w **Credentials**.
+  Konfiguracja klienta backendu:
+  W **Clients → Create client** skonfiguruj klienta:
+  - **Client type:** OpenID Connect
+  - **Client ID:** `pd-tickets-api`
+  - **Client authentication:** Off
+  - **Standard flow:** On
+  - **Standard flow:** Off
+
+   Role:
+   - Client → Roles → Create role:
+      - admin
+      - technician
+      - user
+
+  Konfiguracja Audience Mapper:
+  1. Przejdź do **Clients → pd-tickets-ui → Client scopes → pd-tickets-ui-dedicated → Mappers**.
+  2. Wybierz **Configure a new mapper → Audience**.
+  3. Ustaw:
+  - **Name:** `pd-tickets-api-audience`
+  - **Included Client Audience:** `pd-tickets-api`
+  - **Add to access token:** On
+  - **Add to ID token:** Off
+  4. Zapisz zmiany.
+
+   Konfiguracja ról realm ("biznesowych"):
+   Realm roles → Create role:
+   - `pd-tickets-admin`
+     - Asscociated Roles: `pd-tickets-api admin`, `pd-tickets-ui admin`
+   - `pd-tickets-technician`
+      - Asscociated Roles: `pd-tickets-api technician`, `pd-tickets-ui technician`
+   - `pd-tickets-user`
+      - Asscociated Roles: `pd-tickets-api user`, `pd-tickets-ui user`
+
+5. W **Users → Add user** utwórz użytkowników:
+- username, email ...
+- Credentials: hasło
+- Role mapping: Assign role → Realm roles 
+    
 6. Otwórz http://localhost:8081 i zaloguj się.
 
 Konfiguracja Keycloak jest przechowywana w wolumenie Dockera. Usunięcie wolumenów może wymagać ponownej konfiguracji.
